@@ -11,6 +11,9 @@ export default function Home() {
         <Link href="/" className="flex items-center gap-2 font-bold text-emerald-600">
           <span className="text-xl tracking-tight">Fairteiler</span>
         </Link>
+        <div className="ml-auto">
+          <ModeToggle />
+        </div>
       </header>
       
       <main className="flex-1">

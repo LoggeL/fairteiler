@@ -73,7 +73,10 @@ export default function NeueGruppe() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50/50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50/50 p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-lg border-none shadow-xl shadow-slate-200/50">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3 mb-2">

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExpenseDialog } from '@/components/ExpenseDialog'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { GroupSettings } from '@/components/GroupSettings'
+import { ModeToggle } from '@/components/mode-toggle'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToCSV } from '@/lib/export'
 import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download, Settings, ArrowLeftRight, PieChart, TrendingUp, FileText, Table } from 'lucide-react'
@@ -90,6 +91,7 @@ export default function GruppeDetail() {
           </Badge>
         </div>
         <div className="flex items-center gap-1">
+          <ModeToggle />
           <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500" onClick={copyInviteLink}>
             <Share2 className="h-4 w-4" />
           </Button>
