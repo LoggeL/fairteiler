@@ -9,8 +9,8 @@ import { ExpenseDialog } from '@/components/ExpenseDialog'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { GroupSettings } from '@/components/GroupSettings'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
-import { exportToPDF } from '@/lib/export'
-import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download, Settings, ArrowLeftRight, PieChart, TrendingUp } from 'lucide-react'
+import { exportToCSV } from '@/lib/export'
+import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download, Settings, ArrowLeftRight, PieChart, TrendingUp, FileText, Table } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -397,11 +397,21 @@ export default function GruppeDetail() {
             <Separator className="my-6 bg-slate-100" />
             
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" size="sm" className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" onClick={() => exportToPDF(gruppe, salden, ausgleich)}>
-                <Download className="h-3.5 w-3.5" /> PDF
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" 
+                onClick={() => window.open(`/gruppe/${code}/print`, '_blank')}
+              >
+                <FileText className="h-3.5 w-3.5" /> PDF / Druck
               </Button>
-              <Button variant="outline" size="sm" className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" disabled>
-                Excel
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" 
+                onClick={() => exportToCSV(gruppe)}
+              >
+                <Table className="h-3.5 w-3.5" /> CSV Export
               </Button>
             </div>
           </TabsContent>
