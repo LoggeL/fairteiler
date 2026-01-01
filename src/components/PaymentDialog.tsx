@@ -25,7 +25,103 @@ interface Props {
   mitglieder: Mitglied[]
   waehrung: string
   onSuccess: () => void
-  payment?: Payment // If provided, Edit Mode
+  payment?: Payment
+  trigger?: React.ReactNode // Custom trigger
+}
+
+export function PaymentDialog({ gruppeId, mitglieder, waehrung, onSuccess, payment, trigger }: Props) {
+  const [open, setOpen] = useState(false)
+  // ... rest of state ...
+
+  // ... (keep useEffect and handlers) ...
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ? trigger : (
+          <Button variant="outline" size="sm" className="gap-2 h-9 px-3 rounded-xl border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+            <Plus className="h-3.5 w-3.5" /> Zahlung erfassen
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px] rounded-2xl border-none shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">{payment ? 'Zahlung bearbeiten' : 'Zahlung erfassen'}</DialogTitle>
+          <DialogDescription className="text-slate-500">
+            {payment ? 'Passe die Zahlungsdetails an.' : 'Wer hat wem Geld gegeben?'}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="von" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Von</Label>
+                <select
+                  id="von"
+                  className="flex h-11 w-full rounded-md border-none bg-slate-50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={vonId}
+                  onChange={e => setVonId(e.target.value)}
+                >
+                  {mitglieder.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="an" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">An</Label>
+                <select
+                  id="an"
+                  className="flex h-11 w-full rounded-md border-none bg-slate-50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={anId}
+                  onChange={e => setAnId(e.target.value)}
+                >
+                  {mitglieder.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="betrag" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Betrag</Label>
+              <div className="relative">
+                <Input 
+                  id="betrag" 
+                  value={betrag} 
+                  onChange={e => setBetrag(e.target.value)} 
+                  placeholder="0,00" 
+                  className="pr-12 font-bold text-lg h-12 bg-slate-50 border-none" 
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                />
+                <span className="absolute right-4 top-3 text-slate-400 font-medium">{waehrung}</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-between pt-4">
+             {payment && (
+               <Button 
+                 type="button" 
+                 variant="ghost" 
+                 className="text-slate-400 hover:text-red-500 hover:bg-red-50 h-11 px-4 rounded-xl"
+                 onClick={handleDelete}
+                 disabled={isDeleting}
+               >
+                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+               </Button>
+             )}
+             <div className="flex-1"></div>
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-8 rounded-xl font-bold shadow-lg shadow-emerald-500/20">
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Speichern
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export function PaymentDialog({ gruppeId, mitglieder, waehrung, onSuccess, payment }: Props) {

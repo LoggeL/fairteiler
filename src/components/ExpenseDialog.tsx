@@ -33,7 +33,138 @@ interface Props {
   mitglieder: Mitglied[]
   waehrung: string
   onSuccess: () => void
-  expense?: Expense // If provided, we are in Edit Mode
+  expense?: Expense
+  trigger?: React.ReactNode // Custom trigger
+}
+
+export function ExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess, expense, trigger }: Props) {
+  const [open, setOpen] = useState(false)
+  // ... rest of state ...
+
+  // ... (keep useEffect and other handlers) ...
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ? trigger : (
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-10 px-4 rounded-xl shadow-lg shadow-emerald-500/20">
+            <Plus className="h-4 w-4" /> Ausgabe hinzufügen
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">{expense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}</DialogTitle>
+          <DialogDescription className="text-slate-500">
+            {expense ? 'Passe die Details an.' : 'Wer hat was für die Gruppe bezahlt?'}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="titel" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Beschreibung</Label>
+              <Input id="titel" value={titel} onChange={e => setTitel(e.target.value)} placeholder="z.B. Supermarkt" className="bg-slate-50 border-none h-11" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="betrag" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Betrag</Label>
+              <div className="relative">
+                <Input 
+                  id="betrag" 
+                  value={betrag} 
+                  onChange={e => setBetrag(e.target.value)} 
+                  placeholder="0,00" 
+                  className="pr-12 font-bold text-lg h-12 bg-slate-50 border-none" 
+                  type="number" 
+                  step="0.01"
+                />
+                <span className="absolute right-4 top-3 text-slate-400 font-medium">{waehrung}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zahler" className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Bezahlt von</Label>
+              <select
+                id="zahler"
+                className="flex h-11 w-full rounded-md border-none bg-slate-50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={zahlerId}
+                onChange={e => setZahlerId(e.target.value)}
+              >
+                {mitglieder.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Aufteilung</Label>
+              <Tabs defaultValue="equal" value={splitMode} onValueChange={setSplitMode} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-xl h-10">
+                  <TabsTrigger value="equal" className="gap-2 text-xs rounded-lg">
+                    <Users className="h-3 w-3" /> Gleichmäßig
+                  </TabsTrigger>
+                  <TabsTrigger value="unequal" className="gap-2 text-xs rounded-lg">
+                    <Percent className="h-3 w-3" /> Anteile
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="equal" className="pt-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {mitglieder.map(m => (
+                      <div key={m.id} className={`flex items-center space-x-2 rounded-xl border p-2.5 transition-colors ${selectedMitglieder.includes(m.id) ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : 'bg-slate-50 border-transparent text-slate-500'}`}>
+                        <Checkbox 
+                          id={`m-${m.id}`}
+                          checked={selectedMitglieder.includes(m.id)}
+                          onCheckedChange={() => handleToggleMitglied(m.id)}
+                        />
+                        <label htmlFor={`m-${m.id}`} className="text-xs font-semibold leading-none cursor-pointer flex-1">
+                          {m.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="unequal" className="pt-3">
+                  <div className="space-y-2 bg-slate-50 p-3 rounded-xl">
+                    {mitglieder.map(m => (
+                      <div key={m.id} className="flex items-center gap-2">
+                        <Label className="w-24 truncate text-xs font-medium text-slate-600" htmlFor={`share-${m.id}`}>{m.name}</Label>
+                        <Input 
+                          id={`share-${m.id}`}
+                          value={shares.get(m.id) || ''}
+                          onChange={e => handleShareChange(m.id, e.target.value)}
+                          placeholder="0"
+                          type="number"
+                          className="flex-1 h-9 bg-white border-slate-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-between pt-4">
+             {expense && (
+               <Button 
+                 type="button" 
+                 variant="ghost" 
+                 className="text-slate-400 hover:text-red-500 hover:bg-red-50 h-11 px-4 rounded-xl"
+                 onClick={handleDelete}
+                 disabled={isDeleting}
+               >
+                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+               </Button>
+             )}
+             <div className="flex-1"></div>
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-8 rounded-xl font-bold shadow-lg shadow-emerald-500/20">
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {expense ? 'Speichern' : 'Hinzufügen'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export function ExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess, expense }: Props) {

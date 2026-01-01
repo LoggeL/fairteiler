@@ -32,12 +32,6 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
 
   const handleAddMember = () => {
     if (!newMember.trim()) return
-    // Optimistic add (no ID yet, will be created by backend)
-    // Actually backend expects { id?: string, name: string }
-    // But local state needs consistent type.
-    // I'll handle "new" members by not having an ID in the payload, but here I need a temp ID for UI key.
-    // Let's just append to a separate list or handle it in submit.
-    // Actually easier: just add to list with a temp- prefix ID and filter before sending.
     setMitglieder([...mitglieder, { id: `temp-${Date.now()}`, name: newMember }])
     setNewMember('')
   }
@@ -47,7 +41,6 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
     setIsSubmitting(true)
 
     try {
-      // Filter out temp IDs
       const mitgliederPayload = mitglieder.map(m => ({
         id: m.id.startsWith('temp-') ? undefined : m.id,
         name: m.name
@@ -75,64 +68,62 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gruppeneinstellungen</CardTitle>
-        <CardDescription>Hier kannst du Namen, Währung und Mitglieder verwalten.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Gruppenname</Label>
-            <Input id="name" value={name} onChange={e => setName(e.target.value)} />
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-6 pb-10">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Gruppenname</Label>
+          <Input id="name" value={name} onChange={e => setName(e.target.value)} className="bg-slate-50/50" />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="waehrung">Währung</Label>
-            <select
-              id="waehrung"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={waehrung}
-              onChange={e => setWaehrung(e.target.value)}
-            >
-              {CURRENCIES.map(c => (
-                <option key={c.code} value={c.code}>{c.code} ({c.symbol}) - {c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-4">
-            <Label>Mitglieder</Label>
-            {mitglieder.map((m) => (
-              <div key={m.id} className="flex gap-2">
-                <Input 
-                  value={m.name} 
-                  onChange={(e) => handleMemberNameChange(m.id, e.target.value)}
-                />
-              </div>
+        <div className="space-y-2">
+          <Label htmlFor="waehrung" className="text-xs font-bold uppercase tracking-wider text-slate-500">Währung</Label>
+          <select
+            id="waehrung"
+            className="flex h-10 w-full rounded-md border border-input bg-slate-50/50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={waehrung}
+            onChange={e => setWaehrung(e.target.value)}
+          >
+            {CURRENCIES.map(c => (
+              <option key={c.code} value={c.code}>{c.code} ({c.symbol}) - {c.name}</option>
             ))}
-            <div className="flex gap-2">
-              <Input 
-                placeholder="Neues Mitglied..." 
-                value={newMember}
-                onChange={e => setNewMember(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleAddMember()
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" onClick={handleAddMember}>Hinzufügen</Button>
-            </div>
-          </div>
+          </select>
+        </div>
+      </div>
 
-          <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full">
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Speichern
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="space-y-4">
+        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Mitglieder</Label>
+        <div className="space-y-2">
+          {mitglieder.map((m) => (
+            <div key={m.id} className="flex gap-2">
+              <Input 
+                value={m.name} 
+                onChange={(e) => handleMemberNameChange(m.id, e.target.value)}
+                className="bg-slate-50/50"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Neues Mitglied..." 
+            value={newMember}
+            onChange={e => setNewMember(e.target.value)}
+            className="bg-slate-50/50"
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddMember()
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={handleAddMember}>Hinzufügen</Button>
+        </div>
+      </div>
+
+      <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full shadow-lg shadow-emerald-500/20">
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+        Änderungen speichern
+      </Button>
+    </form>
   )
 }
