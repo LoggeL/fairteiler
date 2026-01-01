@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddExpenseDialog } from '@/components/AddExpenseDialog'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
-import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight } from 'lucide-react'
+import { exportToPDF } from '@/lib/export'
+import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -216,7 +217,9 @@ export default function GruppeDetail() {
                 <CardDescription>Sende eine Übersicht an die Gruppe.</CardDescription>
               </CardHeader>
               <CardContent className="flex gap-2">
-                <Button variant="outline" className="flex-1" disabled>PDF Export (Demnächst)</Button>
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => exportToPDF(gruppe, salden, ausgleich)}>
+                  <Download className="h-4 w-4" /> PDF Export
+                </Button>
                 <Button variant="outline" className="flex-1" disabled>Excel Export (Demnächst)</Button>
               </CardContent>
             </Card>
