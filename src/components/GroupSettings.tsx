@@ -68,7 +68,7 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-10">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-10 px-1">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Gruppenname</Label>

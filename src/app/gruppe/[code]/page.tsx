@@ -99,7 +99,7 @@ export default function GruppeDetail() {
                 <Settings className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-6">
               <SheetHeader className="mb-6">
                 <SheetTitle>Einstellungen</SheetTitle>
                 <SheetDescription>Verwalte deine Gruppe hier.</SheetDescription>
@@ -155,17 +155,17 @@ export default function GruppeDetail() {
                       expense={item}
                       trigger={
                         <Card className="overflow-hidden cursor-pointer hover:ring-1 hover:ring-emerald-500/30 transition-all border-slate-200/60 shadow-sm group">
-                          <CardContent className="p-3 flex items-center justify-between">
-                            <div className="flex flex-col text-left">
-                              <h3 className="font-semibold text-slate-800 text-sm leading-tight group-hover:text-emerald-700 transition-colors">{item.titel}</h3>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-slate-900 text-sm">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
-                            </div>
-                          </CardContent>
+                        <CardContent className="p-2.5 flex items-center justify-between">
+                          <div className="flex flex-col text-left">
+                            <h3 className="font-semibold text-slate-800 text-[13px] leading-tight group-hover:text-emerald-700 transition-colors">{item.titel}</h3>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-slate-900 text-[13px]">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
+                          </div>
+                        </CardContent>
                         </Card>
                       }
                     />
@@ -182,24 +182,24 @@ export default function GruppeDetail() {
                       payment={item}
                       trigger={
                         <Card className="bg-slate-50/50 cursor-pointer overflow-hidden hover:ring-1 hover:ring-emerald-500/30 transition-all border-slate-200/60 shadow-none group">
-                          <CardContent className="p-3 flex items-center justify-between opacity-90">
+                          <CardContent className="p-2.5 flex items-center justify-between opacity-90">
                             <div className="flex items-center gap-3">
                               <div className="bg-emerald-100 p-1.5 rounded-full group-hover:bg-emerald-200 transition-colors">
                                 <ArrowLeftRight className="h-3 w-3 text-emerald-600" />
                               </div>
                               <div className="text-left">
-                                <div className="font-semibold text-slate-700 text-xs">
+                                <div className="font-semibold text-slate-700 text-[11px]">
                                   <span>{item.vonMitglied.name}</span>
                                   <span className="text-slate-400 mx-1.5">→</span>
                                   <span>{item.anMitglied.name}</span>
                                 </div>
-                                <p className="text-[10px] text-slate-400">
+                                <p className="text-[9px] text-slate-400 leading-none mt-0.5">
                                   {new Date(item.datum).toLocaleDateString('de-DE')}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-emerald-600 text-sm">
+                              <p className="font-bold text-emerald-600 text-[13px]">
                                 {Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
                               </p>
                             </div>
