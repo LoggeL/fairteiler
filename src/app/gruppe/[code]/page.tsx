@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddExpenseDialog } from '@/components/AddExpenseDialog'
+import { AddPaymentDialog } from '@/components/AddPaymentDialog'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToPDF } from '@/lib/export'
 import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download } from 'lucide-react'
@@ -152,7 +153,15 @@ export default function GruppeDetail() {
           </TabsContent>
 
           <TabsContent value="abrechnung" className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-2">Vorgeschlagene Zahlungen</h2>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Vorgeschlagene Zahlungen</h2>
+              <AddPaymentDialog 
+                gruppeId={gruppe.id} 
+                mitglieder={gruppe.mitglieder} 
+                waehrung={gruppe.waehrung} 
+                onSuccess={fetchGruppe} 
+              />
+            </div>
             {ausgleich.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
