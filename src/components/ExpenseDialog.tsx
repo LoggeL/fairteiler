@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Loader2, Users, Percent } from 'lucide-react'
+import { Plus, Loader2, Users, Percent, Trash2, Pencil } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
@@ -15,35 +15,89 @@ interface Mitglied {
   name: string
 }
 
+interface Anteil {
+  mitgliedId: string
+  betrag: number
+}
+
+interface Expense {
+  id: string
+  titel: string
+  betrag: number
+  zahlerId: string
+  anteile: Anteil[]
+}
+
 interface Props {
   gruppeId: string
   mitglieder: Mitglied[]
   waehrung: string
   onSuccess: () => void
+  expense?: Expense // If provided, we are in Edit Mode
 }
 
-export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: Props) {
+export function ExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess, expense }: Props) {
   const [open, setOpen] = useState(false)
   const [titel, setTitel] = useState('')
   const [betrag, setBetrag] = useState('')
-  const [zahlerId, setZahlerId] = useState(mitglieder[0]?.id || '')
+  const [zahlerId, setZahlerId] = useState('')
   
   // Split Modes: 'equal' or 'unequal'
   const [splitMode, setSplitMode] = useState('equal')
   
   // Equal Split State
-  const [selectedMitglieder, setSelectedMitglieder] = useState<string[]>(mitglieder.map(m => m.id))
+  const [selectedMitglieder, setSelectedMitglieder] = useState<string[]>([])
   
   // Unequal Split State (Shares/Weights)
-  const [shares, setShares] = useState<Map<string, string>>(new Map(mitglieder.map(m => [m.id, '1'])))
+  const [shares, setShares] = useState<Map<string, string>>(new Map())
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
+  // Initialize form state
   useEffect(() => {
-    if (mitglieder.length > 0 && !zahlerId) {
-      setZahlerId(mitglieder[0].id)
+    if (open) {
+      if (expense) {
+        // Edit Mode Initialization
+        setTitel(expense.titel)
+        setBetrag(expense.betrag.toString())
+        setZahlerId(expense.zahlerId)
+        
+        // Determine split mode based on anteile
+        // For simplicity in MVP, we might default to 'unequal' if amounts differ slightly,
+        // but let's try to detect equal split
+        const amounts = expense.anteile.map(a => Number(a.betrag))
+        const allEqual = amounts.every(val => Math.abs(val - amounts[0]) < 0.01)
+        
+        if (allEqual) {
+          setSplitMode('equal')
+          setSelectedMitglieder(expense.anteile.map(a => a.mitgliedId))
+          // Also init shares just in case user switches tab
+          setShares(new Map(mitglieder.map(m => [m.id, expense.anteile.find(a => a.mitgliedId === m.id) ? '1' : '0'])))
+        } else {
+          setSplitMode('unequal')
+          // Initialize shares with actual amounts as weights
+          const shareMap = new Map<string, string>()
+          mitglieder.forEach(m => {
+             const anteil = expense.anteile.find(a => a.mitgliedId === m.id)
+             shareMap.set(m.id, anteil ? Number(anteil.betrag).toFixed(2) : '')
+          })
+          setShares(shareMap)
+          // Also init selected just in case
+          setSelectedMitglieder(expense.anteile.map(a => a.mitgliedId))
+        }
+
+      } else {
+        // Create Mode Initialization
+        setTitel('')
+        setBetrag('')
+        setZahlerId(mitglieder[0]?.id || '')
+        setSplitMode('equal')
+        setSelectedMitglieder(mitglieder.map(m => m.id))
+        setShares(new Map(mitglieder.map(m => [m.id, '1'])))
+      }
     }
-  }, [mitglieder, zahlerId])
+  }, [open, expense, mitglieder])
 
   const handleToggleMitglied = (id: string) => {
     if (selectedMitglieder.includes(id)) {
@@ -57,6 +111,26 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
     const newShares = new Map(shares)
     newShares.set(id, value)
     setShares(newShares)
+  }
+
+  const handleDelete = async () => {
+    if (!expense) return
+    if (!confirm('Möchtest du diese Ausgabe wirklich löschen?')) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/ausgaben/${expense.id}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) throw new Error('Delete failed')
+      toast.success('Ausgabe gelöscht')
+      setOpen(false)
+      onSuccess()
+    } catch (error) {
+      toast.error('Fehler beim Löschen')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +155,6 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
         betrag: anteilBetrag
       }))
     } else {
-      // Unequal split based on shares/weights
       let totalShares = 0
       const activeShares: { id: string, share: number }[] = []
 
@@ -94,7 +167,7 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
       })
 
       if (totalShares === 0) {
-        toast.error('Bitte gib mindestens einen Anteil/Gewichtung an')
+        toast.error('Bitte gib mindestens einen Anteil an')
         return
       }
 
@@ -106,8 +179,11 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
 
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/ausgaben', {
-        method: 'POST',
+      const url = expense ? `/api/ausgaben/${expense.id}` : '/api/ausgaben'
+      const method = expense ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           titel,
@@ -121,14 +197,12 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
 
       if (!response.ok) throw new Error('Fehler beim Speichern')
 
-      toast.success('Ausgabe hinzugefügt')
-      setTitel('')
-      setBetrag('')
+      toast.success(expense ? 'Ausgabe aktualisiert' : 'Ausgabe hinzugefügt')
       setOpen(false)
       onSuccess()
     } catch (error) {
       console.error(error)
-      toast.error('Fehler beim Hinzufügen der Ausgabe')
+      toast.error('Fehler beim Speichern')
     } finally {
       setIsSubmitting(false)
     }
@@ -137,15 +211,22 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-          <Plus className="h-4 w-4" /> Ausgabe hinzufügen
-        </Button>
+        {expense ? (
+           <div className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors w-full">
+             {/* Trigger is handled by wrapping content */}
+             <span className="sr-only">Bearbeiten</span>
+           </div>
+        ) : (
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+            <Plus className="h-4 w-4" /> Ausgabe hinzufügen
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Neue Ausgabe</DialogTitle>
+          <DialogTitle>{expense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}</DialogTitle>
           <DialogDescription>
-            Wer hat was für die Gruppe bezahlt?
+            Details der Ausgabe anpassen.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -222,7 +303,7 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
                           id={`share-${m.id}`}
                           value={shares.get(m.id) || ''}
                           onChange={e => handleShareChange(m.id, e.target.value)}
-                          placeholder="1"
+                          placeholder="0"
                           type="number"
                           className="flex-1"
                         />
@@ -233,8 +314,19 @@ export function AddExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess }: 
               </Tabs>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+          <DialogFooter className="flex gap-2 sm:justify-between">
+             {expense && (
+               <Button 
+                 type="button" 
+                 variant="destructive" 
+                 onClick={handleDelete}
+                 disabled={isDeleting}
+               >
+                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+               </Button>
+             )}
+             <div className="flex-1"></div>
+            <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white">
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Speichern
             </Button>

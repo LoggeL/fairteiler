@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -72,7 +73,10 @@ export default function NeueGruppe() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-lg">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">

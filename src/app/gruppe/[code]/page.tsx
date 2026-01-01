@@ -5,11 +5,12 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AddExpenseDialog } from '@/components/AddExpenseDialog'
-import { AddPaymentDialog } from '@/components/AddPaymentDialog'
+import { ExpenseDialog } from '@/components/ExpenseDialog'
+import { PaymentDialog } from '@/components/PaymentDialog'
+import { GroupSettings } from '@/components/GroupSettings'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToPDF } from '@/lib/export'
-import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download } from 'lucide-react'
+import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download, Settings, ArrowLeftRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -20,10 +21,11 @@ export default function GruppeDetail() {
   const [loading, setLoading] = useState(true)
   const [salden, setSalden] = useState<Map<string, number>>(new Map())
   const [ausgleich, setAusgleich] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<any[]>([])
 
   const fetchGruppe = useCallback(async () => {
     try {
-      const response = await fetch(`/api/gruppen/${code}`)
+      const response = await fetch(`/api/gruppen/code/${code}`)
       if (!response.ok) throw new Error('Gruppe nicht gefunden')
       const data = await response.json()
       setGruppe(data)
@@ -31,6 +33,15 @@ export default function GruppeDetail() {
       const s = berechneSalden(data.mitglieder, data.ausgaben, data.zahlungen)
       setSalden(s)
       setAusgleich(berechneAusgleichszahlungen(s))
+
+      // Combine and sort transactions
+      const combined = [
+        ...data.ausgaben.map((a: any) => ({ ...a, type: 'expense' })),
+        ...data.zahlungen.map((z: any) => ({ ...z, type: 'payment' }))
+      ].sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())
+      
+      setTransactions(combined)
+
     } catch (error) {
       console.error(error)
       toast.error('Fehler beim Laden der Gruppe')
@@ -76,36 +87,42 @@ export default function GruppeDetail() {
             {gruppe.waehrung}
           </Badge>
         </div>
-        <Button variant="ghost" size="icon" onClick={copyInviteLink}>
-          <Share2 className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={copyInviteLink}>
+            <Share2 className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
       <main className="container max-w-2xl mx-auto p-4 md:p-6">
         <Tabs defaultValue="ausgaben" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="ausgaben" className="gap-2">
-              <Receipt className="h-4 w-4" /> Ausgaben
+              <Receipt className="h-4 w-4" /> <span className="hidden sm:inline">Ausgaben</span>
             </TabsTrigger>
             <TabsTrigger value="salden" className="gap-2">
-              <Users className="h-4 w-4" /> Salden
+              <Users className="h-4 w-4" /> <span className="hidden sm:inline">Salden</span>
             </TabsTrigger>
             <TabsTrigger value="abrechnung" className="gap-2">
-              <Calculator className="h-4 w-4" /> Abrechnung
+              <Calculator className="h-4 w-4" /> <span className="hidden sm:inline">Abrechnung</span>
+            </TabsTrigger>
+            <TabsTrigger value="einstellungen" className="gap-2">
+              <Settings className="h-4 w-4" /> <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="ausgaben" className="space-y-4">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Letzte Ausgaben</h2>
-              <AddExpenseDialog 
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Verlauf</h2>
+              <ExpenseDialog 
                 gruppeId={gruppe.id} 
                 mitglieder={gruppe.mitglieder} 
                 waehrung={gruppe.waehrung} 
                 onSuccess={fetchGruppe} 
               />
             </div>
-            {gruppe.ausgaben.length === 0 ? (
+            
+            {transactions.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
                   <Receipt className="h-10 w-10 text-zinc-300 mb-2" />
@@ -113,21 +130,69 @@ export default function GruppeDetail() {
                 </CardContent>
               </Card>
             ) : (
-              gruppe.ausgaben.map((ausgabe: any) => (
-                <Card key={ausgabe.id} className="overflow-hidden">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">{ausgabe.titel}</h3>
-                      <p className="text-xs text-zinc-500">
-                        Bezahlt von {ausgabe.zahler.name} • {new Date(ausgabe.datum).toLocaleDateString('de-DE')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{Number(ausgabe.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              transactions.map((item: any) => {
+                if (item.type === 'expense') {
+                  return (
+                    <Card key={item.id} className="overflow-hidden hover:border-emerald-500/50 transition-colors">
+                      <ExpenseDialog 
+                        gruppeId={gruppe.id}
+                        mitglieder={gruppe.mitglieder}
+                        waehrung={gruppe.waehrung}
+                        onSuccess={fetchGruppe}
+                        expense={item}
+                      />
+                      <div className="relative pointer-events-none">
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{item.titel}</h3>
+                            <p className="text-xs text-zinc-500">
+                              {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
+                          </div>
+                        </CardContent>
+                      </div>
+                    </Card>
+                  )
+                } else {
+                  // Payment
+                  return (
+                    <Card key={item.id} className="bg-slate-50 dark:bg-zinc-900 overflow-hidden hover:border-emerald-500/50 transition-colors">
+                      <PaymentDialog 
+                        gruppeId={gruppe.id}
+                        mitglieder={gruppe.mitglieder}
+                        waehrung={gruppe.waehrung}
+                        onSuccess={fetchGruppe}
+                        payment={item}
+                      />
+                      <div className="relative pointer-events-none">
+                        <CardContent className="p-4 flex items-center justify-between opacity-80">
+                          <div className="flex items-center gap-2">
+                            <ArrowLeftRight className="h-4 w-4 text-emerald-600" />
+                            <div>
+                              <div className="font-medium flex gap-1 text-sm">
+                                <span>{item.vonMitglied.name}</span>
+                                <span className="text-zinc-400">→</span>
+                                <span>{item.anMitglied.name}</span>
+                              </div>
+                              <p className="text-xs text-zinc-500">
+                                {new Date(item.datum).toLocaleDateString('de-DE')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-emerald-600">
+                              {Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </div>
+                    </Card>
+                  )
+                }
+              })
             )}
           </TabsContent>
 
@@ -155,7 +220,7 @@ export default function GruppeDetail() {
           <TabsContent value="abrechnung" className="space-y-4">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Vorgeschlagene Zahlungen</h2>
-              <AddPaymentDialog 
+              <PaymentDialog 
                 gruppeId={gruppe.id} 
                 mitglieder={gruppe.mitglieder} 
                 waehrung={gruppe.waehrung} 
@@ -232,6 +297,10 @@ export default function GruppeDetail() {
                 <Button variant="outline" className="flex-1" disabled>Excel Export (Demnächst)</Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="einstellungen" className="space-y-4">
+            <GroupSettings gruppe={gruppe} onSuccess={fetchGruppe} />
           </TabsContent>
         </Tabs>
       </main>

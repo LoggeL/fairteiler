@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Receipt, PieChart, ShieldCheck } from 'lucide-react'
@@ -10,6 +11,9 @@ export default function Home() {
         <Link href="/" className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400">
           <span className="text-2xl">Fairteiler</span>
         </Link>
+        <div className="ml-auto">
+          <ModeToggle />
+        </div>
       </header>
       
       <main className="flex-1">
