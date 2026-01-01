@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gruppe {
+  id          String     @id @default(cuid())
+  name        String
+  waehrung    String     @default("EUR")
+  einladecode String     @unique @default(cuid())
+  erstelltAm  DateTime   @default(now())
+  
+  mitglieder  Mitglied[]
+  ausgaben    Ausgabe[]
+  zahlungen   Zahlung[]
+}
+
+model Mitglied {
+  id         String   @id @default(cuid())
+  name       String
+  gruppeId   String
+  erstelltAm DateTime @default(now())
+  
+  gruppe     Gruppe   @relation(fields: [gruppeId], references: [id], onDelete: Cascade)
+  bezahlt    Ausgabe[] @relation("Zahler")
+  anteile    Anteil[]
+  vonZahlungen Zahlung[] @relation("VonMitglied")
+  anZahlungen  Zahlung[] @relation("AnMitglied")
+}
+
+model Ausgabe {
+  id          String   @id @default(cuid())
+  titel       String
+  betrag      Decimal  @db.Decimal(10, 2)
+  waehrung    String   @default("EUR")
+  datum       DateTime @default(now())
+  zahlerId    String
+  gruppeId    String
+  erstelltAm  DateTime @default(now())
+  
+  zahler      Mitglied @relation("Zahler", fields: [zahlerId], references: [id])
+  gruppe      Gruppe   @relation(fields: [gruppeId], references: [id], onDelete: Cascade)
+  anteile     Anteil[]
+}
+
+model Anteil {
+  id         String  @id @default(cuid())
+  ausgabeId  String
+  mitgliedId String
+  betrag     Decimal @db.Decimal(10, 2)
+  
+  ausgabe    Ausgabe  @relation(fields: [ausgabeId], references: [id], onDelete: Cascade)
+  mitglied   Mitglied @relation(fields: [mitgliedId], references: [id], onDelete: Cascade)
+  
+  @@unique([ausgabeId, mitgliedId])
+}
+
+model Zahlung {
+  id            String   @id @default(cuid())
+  gruppeId      String
+  vonMitgliedId String
+  anMitgliedId  String
+  betrag        Decimal  @db.Decimal(10, 2)
+  datum         DateTime @default(now())
+  
+  gruppe        Gruppe   @relation(fields: [gruppeId], references: [id], onDelete: Cascade)
+  vonMitglied   Mitglied @relation("VonMitglied", fields: [vonMitgliedId], references: [id])
+  anMitglied    Mitglied @relation("AnMitglied", fields: [anMitgliedId], references: [id])
+}
