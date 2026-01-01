@@ -171,8 +171,36 @@ export default function GruppeDetail() {
                         <ArrowRight className="h-4 w-4 text-zinc-400" />
                         <span className="font-medium">{an?.name}</span>
                       </div>
-                      <div className="font-bold text-emerald-600">
-                        {z.betrag.toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="font-bold text-emerald-600">
+                          {z.betrag.toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-xs h-7"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/zahlungen', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  gruppeId: gruppe.id,
+                                  vonMitgliedId: z.vonMitgliedId,
+                                  anMitgliedId: z.anMitgliedId,
+                                  betrag: z.betrag
+                                })
+                              })
+                              if (!res.ok) throw new Error()
+                              toast.success('Zahlung erfasst')
+                              fetchGruppe()
+                            } catch (e) {
+                              toast.error('Fehler beim Erfassen')
+                            }
+                          }}
+                        >
+                          Begleichen
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
