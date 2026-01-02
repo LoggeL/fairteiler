@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExpenseDialog } from '@/components/ExpenseDialog'
 import { PaymentDialog } from '@/components/PaymentDialog'
@@ -11,7 +11,7 @@ import { GroupSettings } from '@/components/GroupSettings'
 import { ModeToggle } from '@/components/mode-toggle'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToCSV } from '@/lib/export'
-import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Download, Settings, ArrowLeftRight, PieChart, TrendingUp, FileText, Table } from 'lucide-react'
+import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Settings, ArrowLeftRight, FileText, Table } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -37,7 +37,6 @@ export default function GruppeDetail() {
       setSalden(s)
       setAusgleich(berechneAusgleichszahlungen(s))
 
-      // Combine and sort transactions
       const combined = [
         ...data.ausgaben.map((a: any) => ({ ...a, type: 'expense' })),
         ...data.zahlungen.map((z: any) => ({ ...z, type: 'payment' }))
@@ -65,39 +64,39 @@ export default function GruppeDetail() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   if (!gruppe) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-white">
-        <h1 className="text-2xl font-bold text-slate-900">Gruppe nicht gefunden</h1>
-        <p className="text-slate-500 mt-2">Der Link scheint ungültig zu sein.</p>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-background">
+        <h1 className="text-2xl font-bold text-foreground">Gruppe nicht gefunden</h1>
+        <p className="text-muted-foreground mt-2">Der Link scheint ungültig zu sein.</p>
         <Button className="mt-4" onClick={() => window.location.href = '/'}>Zur Startseite</Button>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
-      <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-white/80 backdrop-blur-md px-4 md:px-6">
+    <div className="min-h-screen bg-background pb-20">
+      <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-card/80 backdrop-blur-md px-4 md:px-6">
         <div className="flex flex-1 items-center gap-3">
-          <h1 className="text-base font-semibold text-slate-900 truncate max-w-[200px]">{gruppe.name}</h1>
-          <Badge variant="secondary" className="text-[10px] h-5 bg-emerald-50 text-emerald-700 border-emerald-100 uppercase">
+          <h1 className="text-base font-semibold text-foreground truncate max-w-[200px]">{gruppe.name}</h1>
+          <Badge variant="secondary" className="text-[10px] h-5 uppercase">
             {gruppe.waehrung}
           </Badge>
         </div>
         <div className="flex items-center gap-1">
           <ModeToggle />
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500" onClick={copyInviteLink}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={copyInviteLink}>
             <Share2 className="h-4 w-4" />
           </Button>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
                 <Settings className="h-4 w-4" />
               </Button>
             </SheetTrigger>
@@ -114,21 +113,21 @@ export default function GruppeDetail() {
 
       <main className="container max-w-2xl mx-auto p-4 md:p-6">
         <Tabs defaultValue="ausgaben" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-xl">
-            <TabsTrigger value="ausgaben" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsList className="grid w-full grid-cols-3 mb-6 p-1 rounded-xl">
+            <TabsTrigger value="ausgaben" className="gap-2 rounded-lg">
               <Receipt className="h-4 w-4" /> <span className="hidden sm:inline">Ausgaben</span>
             </TabsTrigger>
-            <TabsTrigger value="salden" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="salden" className="gap-2 rounded-lg">
               <Users className="h-4 w-4" /> <span className="hidden sm:inline">Übersicht</span>
             </TabsTrigger>
-            <TabsTrigger value="abrechnung" className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="abrechnung" className="gap-2 rounded-lg">
               <Calculator className="h-4 w-4" /> <span className="hidden sm:inline">Abrechnung</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="ausgaben" className="space-y-3">
             <div className="flex justify-between items-center mb-1 px-1">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Verlauf</h2>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Verlauf</h2>
               <ExpenseDialog 
                 gruppeId={gruppe.id} 
                 mitglieder={gruppe.mitglieder} 
@@ -138,10 +137,10 @@ export default function GruppeDetail() {
             </div>
             
             {transactions.length === 0 ? (
-              <Card className="border-dashed border-slate-200 bg-transparent shadow-none">
+              <Card className="border-dashed bg-transparent shadow-none">
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <Receipt className="h-12 w-12 text-slate-200 mb-3" />
-                  <p className="text-slate-400 font-medium">Noch keine Ausgaben.</p>
+                  <Receipt className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                  <p className="text-muted-foreground font-medium">Noch keine Ausgaben.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -156,16 +155,16 @@ export default function GruppeDetail() {
                       onSuccess={fetchGruppe}
                       expense={item}
                       trigger={
-                        <Card className="overflow-hidden cursor-pointer hover:ring-1 hover:ring-emerald-500/30 transition-all border-slate-200/60 shadow-sm group">
+                        <Card className="overflow-hidden cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all shadow-sm group">
                         <CardContent className="p-2.5 flex items-center justify-between">
                           <div className="flex flex-col text-left">
-                            <h3 className="font-semibold text-slate-800 text-[13px] leading-tight group-hover:text-emerald-700 transition-colors">{item.titel}</h3>
-                            <p className="text-[10px] text-slate-400 mt-0.5">
+                            <h3 className="font-semibold text-foreground text-[13px] leading-tight group-hover:text-primary transition-colors">{item.titel}</h3>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
                               {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-slate-900 text-[13px]">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
+                            <p className="font-bold text-foreground text-[13px]">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
                           </div>
                         </CardContent>
                         </Card>
@@ -173,7 +172,6 @@ export default function GruppeDetail() {
                     />
                   )
                 } else {
-                  // Payment
                   return (
                     <PaymentDialog 
                       key={item.id}
@@ -183,25 +181,25 @@ export default function GruppeDetail() {
                       onSuccess={fetchGruppe}
                       payment={item}
                       trigger={
-                        <Card className="bg-slate-50/50 cursor-pointer overflow-hidden hover:ring-1 hover:ring-emerald-500/30 transition-all border-slate-200/60 shadow-none group">
+                        <Card className="bg-muted/50 cursor-pointer overflow-hidden hover:ring-1 hover:ring-primary/30 transition-all shadow-none group">
                           <CardContent className="p-2.5 flex items-center justify-between opacity-90">
                             <div className="flex items-center gap-3">
-                              <div className="bg-emerald-100 p-1.5 rounded-full group-hover:bg-emerald-200 transition-colors">
-                                <ArrowLeftRight className="h-3 w-3 text-emerald-600" />
+                              <div className="bg-accent p-1.5 rounded-full group-hover:bg-primary/20 transition-colors">
+                                <ArrowLeftRight className="h-3 w-3 text-primary" />
                               </div>
                               <div className="text-left">
-                                <div className="font-semibold text-slate-700 text-[11px]">
+                                <div className="font-semibold text-foreground/80 text-[11px]">
                                   <span>{item.vonMitglied.name}</span>
-                                  <span className="text-slate-400 mx-1.5">→</span>
+                                  <span className="text-muted-foreground mx-1.5">→</span>
                                   <span>{item.anMitglied.name}</span>
                                 </div>
-                                <p className="text-[9px] text-slate-400 leading-none mt-0.5">
+                                <p className="text-[9px] text-muted-foreground leading-none mt-0.5">
                                   {new Date(item.datum).toLocaleDateString('de-DE')}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-emerald-600 text-[13px]">
+                              <p className="font-bold text-primary text-[13px]">
                                 {Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
                               </p>
                             </div>
@@ -244,56 +242,56 @@ export default function GruppeDetail() {
               return (
                 <>
                   <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-none bg-white shadow-sm ring-1 ring-slate-200/60">
+                    <Card className="shadow-sm">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gesamt</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gesamt</CardTitle>
                       </CardHeader>
                       <CardContent className="pb-3 px-3">
-                        <div className="text-lg font-bold text-slate-900">{formatMoney(totalExpenses)}</div>
+                        <div className="text-lg font-bold text-foreground">{formatMoney(totalExpenses)}</div>
                       </CardContent>
                     </Card>
                     
-                    <Card className="border-none bg-white shadow-sm ring-1 ring-slate-200/60">
+                    <Card className="shadow-sm">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schnitt</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Schnitt</CardTitle>
                       </CardHeader>
                       <CardContent className="pb-3 px-3">
-                        <div className="text-lg font-bold text-slate-900">{formatMoney(averagePerPerson)}</div>
+                        <div className="text-lg font-bold text-foreground">{formatMoney(averagePerPerson)}</div>
                       </CardContent>
                     </Card>
 
-                    <Card className="border-none bg-white shadow-sm ring-1 ring-slate-200/60 hidden sm:block">
+                    <Card className="shadow-sm hidden sm:block">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Top Zahler</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Zahler</CardTitle>
                       </CardHeader>
                       <CardContent className="pb-3 px-3">
-                        <div className="text-lg font-bold text-slate-900 truncate">{topSpender?.name || "-"}</div>
+                        <div className="text-lg font-bold text-foreground truncate">{topSpender?.name || "-"}</div>
                       </CardContent>
                     </Card>
 
-                    <Card className="border-none bg-white shadow-sm ring-1 ring-slate-200/60 hidden sm:block">
+                    <Card className="shadow-sm hidden sm:block">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Max Ausgabe</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Max Ausgabe</CardTitle>
                       </CardHeader>
                       <CardContent className="pb-3 px-3">
-                        <div className="text-lg font-bold text-slate-900">{mostExpensive ? formatMoney(Number(mostExpensive.betrag)) : "-"}</div>
+                        <div className="text-lg font-bold text-foreground">{mostExpensive ? formatMoney(Number(mostExpensive.betrag)) : "-"}</div>
                       </CardContent>
                     </Card>
                   </div>
 
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-3">
-                      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">Kontostand</h2>
+                      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Kontostand</h2>
                       {gruppe.mitglieder.map((mitglied: any) => {
                         const saldo = salden.get(mitglied.id) || 0
                         const isPositive = saldo > 0
                         const isZero = Math.abs(saldo) < 0.01
 
                         return (
-                          <Card key={mitglied.id} className="border-none bg-white shadow-sm ring-1 ring-slate-200/60">
+                          <Card key={mitglied.id} className="shadow-sm">
                             <CardContent className="p-3 flex items-center justify-between">
-                              <span className="font-semibold text-slate-700 text-sm">{mitglied.name}</span>
-                              <div className={`text-right font-bold text-sm ${isZero ? 'text-slate-400' : isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+                              <span className="font-semibold text-foreground/80 text-sm">{mitglied.name}</span>
+                              <div className={`text-right font-bold text-sm ${isZero ? 'text-muted-foreground' : isPositive ? 'text-primary' : 'text-destructive'}`}>
                                 {isPositive ? '+' : ''}
                                 {saldo.toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
                               </div>
@@ -304,20 +302,20 @@ export default function GruppeDetail() {
                     </div>
 
                     <div className="space-y-3">
-                      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">Verteilung</h2>
+                      <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Verteilung</h2>
                       {gruppe.mitglieder.map((mitglied: any) => {
                         const spent = spendingByMember.get(mitglied.id) || 0
                         const percentage = totalExpenses > 0 ? (spent / totalExpenses) * 100 : 0
                         
                         return (
-                          <Card key={mitglied.id} className="border-none bg-white shadow-sm ring-1 ring-slate-200/60">
+                          <Card key={mitglied.id} className="shadow-sm">
                             <CardContent className="p-3 space-y-2">
-                              <div className="flex justify-between text-xs font-semibold text-slate-600">
+                              <div className="flex justify-between text-xs font-semibold text-foreground/70">
                                 <span>{mitglied.name}</span>
                                 <span>{formatMoney(spent)}</span>
                               </div>
-                              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentage}%` }} />
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-primary rounded-full" style={{ width: `${percentage}%` }} />
                               </div>
                             </CardContent>
                           </Card>
@@ -332,7 +330,7 @@ export default function GruppeDetail() {
 
           <TabsContent value="abrechnung" className="space-y-4">
             <div className="flex justify-between items-center mb-1 px-1">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Vorschläge</h2>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vorschläge</h2>
               <PaymentDialog 
                 gruppeId={gruppe.id} 
                 mitglieder={gruppe.mitglieder} 
@@ -341,10 +339,10 @@ export default function GruppeDetail() {
               />
             </div>
             {ausgleich.length === 0 ? (
-              <Card className="border-none bg-emerald-50/50 shadow-none ring-1 ring-emerald-100">
+              <Card className="bg-accent/50 shadow-none border-accent">
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                  <Calculator className="h-10 w-10 text-emerald-200 mb-2" />
-                  <p className="text-emerald-700 font-medium text-sm">Alles ausgeglichen!</p>
+                  <Calculator className="h-10 w-10 text-primary/30 mb-2" />
+                  <p className="text-primary font-medium text-sm">Alles ausgeglichen!</p>
                 </CardContent>
               </Card>
             ) : (
@@ -352,21 +350,21 @@ export default function GruppeDetail() {
                 const von = gruppe.mitglieder.find((m: any) => m.id === z.vonMitgliedId)
                 const an = gruppe.mitglieder.find((m: any) => m.id === z.anMitgliedId)
                 return (
-                  <Card key={i} className="border-none bg-white shadow-sm ring-1 ring-slate-200/60 overflow-hidden">
+                  <Card key={i} className="shadow-sm overflow-hidden">
                     <CardContent className="p-3 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="font-semibold text-slate-700 text-sm">{von?.name}</span>
-                        <ArrowRight className="h-3 w-3 text-slate-300" />
-                        <span className="font-semibold text-slate-700 text-sm">{an?.name}</span>
+                        <span className="font-semibold text-foreground/80 text-sm">{von?.name}</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                        <span className="font-semibold text-foreground/80 text-sm">{an?.name}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="font-bold text-emerald-600 text-sm">
+                        <div className="font-bold text-primary text-sm">
                           {z.betrag.toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
                         </div>
                         <Button 
                           size="sm" 
                           variant="ghost" 
-                          className="text-xs h-8 px-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
+                          className="text-xs h-8 px-2 text-primary hover:bg-accent hover:text-primary font-bold"
                           onClick={async () => {
                             try {
                               const res = await fetch('/api/zahlungen', {
@@ -396,13 +394,13 @@ export default function GruppeDetail() {
               })
             )}
             
-            <Separator className="my-6 bg-slate-100" />
+            <Separator className="my-6" />
             
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" 
+                className="w-full gap-2 font-semibold" 
                 onClick={() => window.open(`/gruppe/${code}/print`, '_blank')}
               >
                 <FileText className="h-3.5 w-3.5" /> PDF / Druck
@@ -410,7 +408,7 @@ export default function GruppeDetail() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full gap-2 border-slate-200 text-slate-600 font-semibold" 
+                className="w-full gap-2 font-semibold" 
                 onClick={() => exportToCSV(gruppe)}
               >
                 <Table className="h-3.5 w-3.5" /> CSV Export

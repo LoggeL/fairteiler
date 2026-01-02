@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CURRENCIES } from '@/lib/currencies'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
@@ -71,15 +70,15 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6 pb-10 px-1">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Gruppenname</Label>
-          <Input id="name" value={name} onChange={e => setName(e.target.value)} className="bg-slate-50/50" />
+          <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Gruppenname</Label>
+          <Input id="name" value={name} onChange={e => setName(e.target.value)} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="waehrung" className="text-xs font-bold uppercase tracking-wider text-slate-500">Währung</Label>
+          <Label htmlFor="waehrung" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Währung</Label>
           <select
             id="waehrung"
-            className="flex h-10 w-full rounded-md border border-input bg-slate-50/50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={waehrung}
             onChange={e => setWaehrung(e.target.value)}
           >
@@ -91,14 +90,13 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
       </div>
 
       <div className="space-y-4">
-        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Mitglieder</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mitglieder</Label>
         <div className="space-y-2">
           {mitglieder.map((m) => (
             <div key={m.id} className="flex gap-2">
               <Input 
                 value={m.name} 
                 onChange={(e) => handleMemberNameChange(m.id, e.target.value)}
-                className="bg-slate-50/50"
               />
             </div>
           ))}
@@ -108,7 +106,6 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
             placeholder="Neues Mitglied..." 
             value={newMember}
             onChange={e => setNewMember(e.target.value)}
-            className="bg-slate-50/50"
             onKeyDown={e => {
               if (e.key === 'Enter') {
                 e.preventDefault()
@@ -120,7 +117,7 @@ export function GroupSettings({ gruppe, onSuccess }: Props) {
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full shadow-lg shadow-emerald-500/20">
+      <Button type="submit" disabled={isSubmitting} className="w-full shadow-lg">
         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
         Änderungen speichern
       </Button>
