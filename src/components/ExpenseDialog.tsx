@@ -9,6 +9,8 @@ import { Plus, Loader2, Users, Percent, Trash2 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface Mitglied {
   id: string
@@ -77,7 +79,8 @@ export function ExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess, expen
         setZahlerId(mitglieder[0]?.id || '')
         setSplitMode('equal')
         setSelectedMitglieder(mitglieder.map(m => m.id))
-        setShares(new Map(mitglieder.map(m => [m.id, '1'])))
+        const equal = (100 / mitglieder.length).toFixed(1)
+        setShares(new Map(mitglieder.map(m => [m.id, equal])))
       }
     }
   }, [open, expense, mitglieder])
@@ -217,13 +220,50 @@ export function ExpenseDialog({ gruppeId, mitglieder, waehrung, onSuccess, expen
                   </div>
                 </TabsContent>
                 <TabsContent value="unequal" className="pt-3">
-                  <div className="space-y-2 bg-muted p-3 rounded-xl">
+                  <div className="space-y-2 bg-slate-50 p-3 rounded-xl dark:bg-muted/50">
+                    <div className="flex justify-between items-center mb-2 px-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prozentuale Aufteilung (%)</p>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] h-5",
+                        Math.abs(Array.from(shares.values()).reduce((a, b) => a + parseFloat(b || '0'), 0) - 100) < 0.01 
+                          ? "text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20" 
+                          : "text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+                      )}>
+                        Gesamt: {Array.from(shares.values()).reduce((a, b) => a + parseFloat(b || '0'), 0).toFixed(1)}%
+                      </Badge>
+                    </div>
                     {mitglieder.map(m => (
                       <div key={m.id} className="flex items-center gap-2">
-                        <Label className="w-24 truncate text-xs font-medium text-foreground/70" htmlFor={`share-${m.id}`}>{m.name}</Label>
-                        <Input id={`share-${m.id}`} value={shares.get(m.id) || ''} onChange={e => handleShareChange(m.id, e.target.value)} placeholder="0" type="number" className="flex-1 h-9" />
+                        <Label className="w-24 truncate text-xs font-bold text-foreground/70" htmlFor={`share-${m.id}`}>{m.name}</Label>
+                        <div className="relative flex-1">
+                          <Input 
+                            id={`share-${m.id}`} 
+                            value={shares.get(m.id) || ''} 
+                            onChange={e => handleShareChange(m.id, e.target.value)} 
+                            placeholder="0" 
+                            type="number" 
+                            className="h-9 bg-background border-border pr-7 font-bold text-xs" 
+                          />
+                          <span className="absolute right-3 top-2 text-[10px] font-bold text-muted-foreground">%</span>
+                        </div>
                       </div>
                     ))}
+                    <div className="pt-2">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-[10px] font-bold uppercase tracking-widest h-7"
+                        onClick={() => {
+                          const equal = (100 / mitglieder.length).toFixed(1)
+                          const newShares = new Map()
+                          mitglieder.forEach(m => newShares.set(m.id, equal))
+                          setShares(newShares)
+                        }}
+                      >
+                        Auf 100% verteilen
+                      </Button>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>

@@ -8,12 +8,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { CURRENCIES } from '@/lib/currencies'
-import { Plus, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Loader2, Menu } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { useRecentGroups } from '@/hooks/use-recent-groups'
+import { SidebarContent } from '@/components/AppSidebar'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
 export default function NeueGruppe() {
   const router = useRouter()
+  const { addGroup } = useRecentGroups()
   const [name, setName] = useState('')
   const [waehrung, setWaehrung] = useState('EUR')
   const [mitglieder, setMitglieder] = useState(['', ''])
@@ -63,6 +67,7 @@ export default function NeueGruppe() {
       if (!response.ok) throw new Error('Fehler beim Erstellen')
 
       const data = await response.json()
+      addGroup({ id: data.id, name: data.name, code: data.einladecode })
       router.push(`/gruppe/${data.einladecode}`)
     } catch (error) {
       console.error(error)
@@ -78,6 +83,19 @@ export default function NeueGruppe() {
       <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       
+      <div className="absolute top-6 left-6 md:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground bg-card/50 backdrop-blur-md rounded-xl ring-1 ring-border">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64 border-none">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </div>
+
       <div className="absolute top-6 right-6">
         <ModeToggle />
       </div>

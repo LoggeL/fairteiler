@@ -9,6 +9,7 @@ import { ExpenseDialog } from '@/components/ExpenseDialog'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { GroupSettings } from '@/components/GroupSettings'
 import { ModeToggle } from '@/components/mode-toggle'
+import { useRecentGroups } from '@/hooks/use-recent-groups'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToCSV } from '@/lib/export'
 import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Settings, ArrowLeftRight, FileText, Table } from 'lucide-react'
@@ -17,6 +18,8 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { SidebarContent } from '@/components/AppSidebar'
+import { Menu } from 'lucide-react'
 
 export default function GruppeDetail() {
   const { code } = useParams()
@@ -25,6 +28,7 @@ export default function GruppeDetail() {
   const [salden, setSalden] = useState<Map<string, number>>(new Map())
   const [ausgleich, setAusgleich] = useState<any[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
+  const { addGroup } = useRecentGroups()
 
   const fetchGruppe = useCallback(async () => {
     try {
@@ -32,6 +36,9 @@ export default function GruppeDetail() {
       if (!response.ok) throw new Error('Gruppe nicht gefunden')
       const data = await response.json()
       setGruppe(data)
+      
+      // Save to recent groups
+      addGroup({ id: data.id, name: data.name, code: data.einladecode })
       
       const s = berechneSalden(data.mitglieder, data.ausgaben, data.zahlungen)
       setSalden(s)
@@ -83,8 +90,20 @@ export default function GruppeDetail() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/80 backdrop-blur-md px-4 md:px-6">
+        <div className="flex items-center gap-2 md:hidden mr-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64 border-none">
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
+        </div>
         <div className="flex flex-1 items-center gap-3">
-          <h1 className="text-base font-bold text-foreground truncate max-w-[200px]">{gruppe.name}</h1>
+          <h1 className="text-base font-bold text-foreground truncate max-w-[150px] sm:max-w-[200px]">{gruppe.name}</h1>
           <Badge variant="secondary" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/20 uppercase">
             {gruppe.waehrung}
           </Badge>
