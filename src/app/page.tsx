@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ModeToggle } from '@/components/mode-toggle'
+import { UserMenu } from '@/components/UserMenu'
 import { Button } from '@/components/ui/button'
 import { Users, Receipt, PieChart, ShieldCheck } from 'lucide-react'
 
@@ -10,8 +11,9 @@ export default function Home() {
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <span className="text-xl tracking-tighter">Fairteiler</span>
         </Link>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <ModeToggle />
+          <UserMenu />
         </div>
       </header>
       

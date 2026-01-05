@@ -7,13 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  hashedPassword String
+  name           String?
+  createdAt      DateTime   @default(now())
+  
+  gruppen        Gruppe[]   @relation("GruppeErsteller")
+  mitglieder     Mitglied[] @relation("ClaimedMitglied")
+}
+
 model Gruppe {
   id          String     @id @default(cuid())
   name        String
   waehrung    String     @default("EUR")
   einladecode String     @unique @default(cuid())
   erstelltAm  DateTime   @default(now())
+  erstellerId String?
   
+  ersteller   User?      @relation("GruppeErsteller", fields: [erstellerId], references: [id])
   mitglieder  Mitglied[]
   ausgaben    Ausgabe[]
   zahlungen   Zahlung[]
@@ -24,7 +37,9 @@ model Mitglied {
   name       String
   gruppeId   String
   erstelltAm DateTime @default(now())
+  userId     String?
   
+  user       User?    @relation("ClaimedMitglied", fields: [userId], references: [id])
   gruppe     Gruppe   @relation(fields: [gruppeId], references: [id], onDelete: Cascade)
   bezahlt    Ausgabe[] @relation("Zahler")
   anteile    Anteil[]

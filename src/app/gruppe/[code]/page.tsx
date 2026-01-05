@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -9,10 +11,11 @@ import { ExpenseDialog } from '@/components/ExpenseDialog'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { GroupSettings } from '@/components/GroupSettings'
 import { ModeToggle } from '@/components/mode-toggle'
+import { UserMenu } from '@/components/UserMenu'
 import { useRecentGroups } from '@/hooks/use-recent-groups'
 import { berechneSalden, berechneAusgleichszahlungen } from '@/lib/balance-calc'
 import { exportToCSV } from '@/lib/export'
-import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Settings, ArrowLeftRight, FileText, Table } from 'lucide-react'
+import { Receipt, Users, Calculator, Share2, Loader2, ArrowRight, Settings, ArrowLeftRight, FileText, Table, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -20,9 +23,12 @@ import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { SidebarContent } from '@/components/AppSidebar'
 import { Menu } from 'lucide-react'
+import { GroupAnalytics } from '@/components/GroupAnalytics'
 
 export default function GruppeDetail() {
   const { code } = useParams()
+  const { data: session, status } = useSession()
+  const isAuthenticated = !!session
   const [gruppe, setGruppe] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [salden, setSalden] = useState<Map<string, number>>(new Map())
@@ -113,20 +119,23 @@ export default function GruppeDetail() {
           <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={copyInviteLink}>
             <Share2 className="h-4 w-4" />
           </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-6">
-              <SheetHeader className="mb-6">
-                <SheetTitle>Einstellungen</SheetTitle>
-                <SheetDescription>Verwalte deine Gruppe hier.</SheetDescription>
-              </SheetHeader>
-              <GroupSettings gruppe={gruppe} onSuccess={fetchGruppe} />
-            </SheetContent>
-          </Sheet>
+          {isAuthenticated && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto p-6">
+                <SheetHeader className="mb-6">
+                  <SheetTitle>Einstellungen</SheetTitle>
+                  <SheetDescription>Verwalte deine Gruppe hier.</SheetDescription>
+                </SheetHeader>
+                <GroupSettings gruppe={gruppe} onSuccess={fetchGruppe} session={session} />
+              </SheetContent>
+            </Sheet>
+          )}
+          <UserMenu />
         </div>
       </header>
 
@@ -145,14 +154,31 @@ export default function GruppeDetail() {
           </TabsList>
 
           <TabsContent value="ausgaben" className="space-y-4 pt-2">
+            {!isAuthenticated && (
+              <Card className="border-none bg-amber-50 dark:bg-amber-950/30 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <LogIn className="h-5 w-5 text-amber-600" />
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Melde dich an, um Ausgaben hinzuzufügen.</p>
+                  </div>
+                  <Link href={`/login?callbackUrl=/gruppe/${code}`}>
+                    <Button size="sm" variant="outline" className="font-bold text-xs border-amber-300 hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900">
+                      Anmelden
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
             <div className="flex justify-between items-center mb-1 px-1">
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Verlauf</h2>
-              <ExpenseDialog 
-                gruppeId={gruppe.id} 
-                mitglieder={gruppe.mitglieder} 
-                waehrung={gruppe.waehrung} 
-                onSuccess={fetchGruppe} 
-              />
+              {isAuthenticated && (
+                <ExpenseDialog 
+                  gruppeId={gruppe.id} 
+                  mitglieder={gruppe.mitglieder} 
+                  waehrung={gruppe.waehrung} 
+                  onSuccess={fetchGruppe} 
+                />
+              )}
             </div>
             
             {transactions.length === 0 ? (
@@ -166,68 +192,78 @@ export default function GruppeDetail() {
               <div className="grid gap-3">
                 {transactions.map((item: any) => {
                   if (item.type === 'expense') {
-                    return (
-                      <ExpenseDialog 
-                        key={item.id}
-                        gruppeId={gruppe.id}
-                        mitglieder={gruppe.mitglieder}
-                        waehrung={gruppe.waehrung}
-                        onSuccess={fetchGruppe}
-                        expense={item}
-                        trigger={
-                          <Card className="overflow-hidden cursor-pointer border-none bg-card shadow-md hover:ring-2 hover:ring-primary/20 transition-all group active:scale-[0.98]">
-                            <CardContent className="p-4 flex items-center justify-between">
-                              <div className="flex flex-col text-left">
-                                <h3 className="font-bold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">{item.titel}</h3>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-tighter">
-                                  {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-black text-foreground text-base tracking-tight">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        }
-                      />
+                    const expenseCard = (
+                      <Card className={`overflow-hidden border-none bg-card shadow-md transition-all ${isAuthenticated ? 'cursor-pointer hover:ring-2 hover:ring-primary/20 group active:scale-[0.98]' : ''}`}>
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex flex-col text-left">
+                            <h3 className={`font-bold text-foreground text-sm leading-tight ${isAuthenticated ? 'group-hover:text-primary' : ''} transition-colors`}>{item.titel}</h3>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-tighter">
+                              {item.zahler.name} • {new Date(item.datum).toLocaleDateString('de-DE')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-foreground text-base tracking-tight">{Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )
+                    
+                    if (isAuthenticated) {
+                      return (
+                        <ExpenseDialog 
+                          key={item.id}
+                          gruppeId={gruppe.id}
+                          mitglieder={gruppe.mitglieder}
+                          waehrung={gruppe.waehrung}
+                          onSuccess={fetchGruppe}
+                          expense={item}
+                          trigger={expenseCard}
+                        />
+                      )
+                    }
+                    return <div key={item.id}>{expenseCard}</div>
                   } else {
-                    return (
-                      <PaymentDialog 
-                        key={item.id}
-                        gruppeId={gruppe.id}
-                        mitglieder={gruppe.mitglieder}
-                        waehrung={gruppe.waehrung}
-                        onSuccess={fetchGruppe}
-                        payment={item}
-                        trigger={
-                          <Card className="bg-muted/30 cursor-pointer overflow-hidden border-none shadow-sm hover:ring-2 hover:ring-primary/20 transition-all group active:scale-[0.98]">
-                            <CardContent className="p-4 flex items-center justify-between opacity-90">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-primary/10 p-2 rounded-full group-hover:bg-primary/20 transition-colors">
-                                  <ArrowLeftRight className="h-4 w-4 text-primary" />
-                                </div>
-                                <div className="text-left">
-                                  <div className="font-bold text-foreground/80 text-xs">
-                                    <span>{item.vonMitglied.name}</span>
-                                    <span className="text-muted-foreground mx-2">→</span>
-                                    <span>{item.anMitglied.name}</span>
-                                  </div>
-                                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                    {new Date(item.datum).toLocaleDateString('de-DE')}
-                                  </p>
-                                </div>
+                    const paymentCard = (
+                      <Card className={`bg-muted/30 overflow-hidden border-none shadow-sm transition-all ${isAuthenticated ? 'cursor-pointer hover:ring-2 hover:ring-primary/20 group active:scale-[0.98]' : ''}`}>
+                        <CardContent className="p-4 flex items-center justify-between opacity-90">
+                          <div className="flex items-center gap-4">
+                            <div className={`bg-primary/10 p-2 rounded-full ${isAuthenticated ? 'group-hover:bg-primary/20' : ''} transition-colors`}>
+                              <ArrowLeftRight className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-bold text-foreground/80 text-xs">
+                                <span>{item.vonMitglied.name}</span>
+                                <span className="text-muted-foreground mx-2">→</span>
+                                <span>{item.anMitglied.name}</span>
                               </div>
-                              <div className="text-right">
-                                <p className="font-black text-primary text-base tracking-tight">
-                                  {Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        }
-                      />
+                              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                                {new Date(item.datum).toLocaleDateString('de-DE')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-primary text-base tracking-tight">
+                              {Number(item.betrag).toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )
+                    
+                    if (isAuthenticated) {
+                      return (
+                        <PaymentDialog 
+                          key={item.id}
+                          gruppeId={gruppe.id}
+                          mitglieder={gruppe.mitglieder}
+                          waehrung={gruppe.waehrung}
+                          onSuccess={fetchGruppe}
+                          payment={item}
+                          trigger={paymentCard}
+                        />
+                      )
+                    }
+                    return <div key={item.id}>{paymentCard}</div>
                   }
                 })}
               </div>
@@ -276,6 +312,13 @@ export default function GruppeDetail() {
                     <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-emerald-500/20" />
                     <div className="absolute -left-12 -bottom-12 h-48 w-48 rounded-full bg-emerald-700/30" />
                   </div>
+
+                  <GroupAnalytics 
+                    transactions={transactions} 
+                    mitglieder={gruppe.mitglieder} 
+                    waehrung={gruppe.waehrung}
+                    salden={salden}
+                  />
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
@@ -340,12 +383,14 @@ export default function GruppeDetail() {
           <TabsContent value="abrechnung" className="space-y-4 pt-2">
             <div className="flex justify-between items-center mb-1 px-1">
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vorschläge</h2>
-              <PaymentDialog 
-                gruppeId={gruppe.id} 
-                mitglieder={gruppe.mitglieder} 
-                waehrung={gruppe.waehrung} 
-                onSuccess={fetchGruppe} 
-              />
+              {isAuthenticated && (
+                <PaymentDialog 
+                  gruppeId={gruppe.id} 
+                  mitglieder={gruppe.mitglieder} 
+                  waehrung={gruppe.waehrung} 
+                  onSuccess={fetchGruppe} 
+                />
+              )}
             </div>
             {ausgleich.length === 0 ? (
               <Card className="border-none bg-primary/5 shadow-none ring-1 ring-primary/10">
@@ -370,32 +415,34 @@ export default function GruppeDetail() {
                         <div className="font-black text-primary text-sm">
                           {z.betrag.toLocaleString('de-DE', { style: 'currency', currency: gruppe.waehrung })}
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          className="text-xs font-bold h-8 px-3 rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch('/api/zahlungen', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  gruppeId: gruppe.id,
-                                  vonMitgliedId: z.vonMitgliedId,
-                                  anMitgliedId: z.anMitgliedId,
-                                  betrag: z.betrag
+                        {isAuthenticated && (
+                          <Button 
+                            size="sm" 
+                            variant="secondary" 
+                            className="text-xs font-bold h-8 px-3 rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch('/api/zahlungen', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    gruppeId: gruppe.id,
+                                    vonMitgliedId: z.vonMitgliedId,
+                                    anMitgliedId: z.anMitgliedId,
+                                    betrag: z.betrag
+                                  })
                                 })
-                              })
-                              if (!res.ok) throw new Error()
-                              toast.success('Zahlung erfasst')
-                              fetchGruppe()
-                            } catch (e) {
-                              toast.error('Fehler beim Erfassen')
-                            }
-                          }}
-                        >
-                          Begleichen
-                        </Button>
+                                if (!res.ok) throw new Error()
+                                toast.success('Zahlung erfasst')
+                                fetchGruppe()
+                              } catch (e) {
+                                toast.error('Fehler beim Erfassen')
+                              }
+                            }}
+                          >
+                            Begleichen
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
